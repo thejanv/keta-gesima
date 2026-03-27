@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dice Roller</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f4f4f4;
+        font-family: system-ui, sans-serif;
+      }
+      .wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.8rem;
+        padding: 3rem 2rem;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 4px 32px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 500;
+        color: #111;
+        letter-spacing: 0.01em;
+      }
+      .scene {
+        width: 200px;
+        height: 200px;
+        perspective: 700px;
+      }
+      .cube {
+        width: 140px;
+        height: 140px;
+        margin: 30px auto;
+        position: relative;
+        transform-style: preserve-3d;
+        transform: rotateX(-25deg) rotateY(30deg);
+      }
+      .face {
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        background: #111;
+        border: 2px solid #333;
+        border-radius: 18px;
+        box-sizing: border-box;
+        padding: 14px;
+      }
+      .front {
+        transform: translateZ(70px);
+      }
+      .back {
+        transform: rotateY(180deg) translateZ(70px);
+      }
+      .right {
+        transform: rotateY(90deg) translateZ(70px);
+      }
+      .left {
+        transform: rotateY(-90deg) translateZ(70px);
+      }
+      .top {
+        transform: rotateX(90deg) translateZ(70px);
+      }
+      .bottom {
+        transform: rotateX(-90deg) translateZ(70px);
+      }
+      .dg {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: 1fr 1fr 1fr;
+        width: 100%;
+        height: 100%;
+        gap: 4px;
+      }
+      .d {
+        border-radius: 50%;
+        background: #fff;
+      }
+      .d.x {
+        visibility: hidden;
+      }
+      .btn {
+        padding: 13px 52px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 12px;
+        border: 1.5px solid #ccc;
+        background: #fff;
+        color: #111;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+      }
+      .btn:hover {
+        background: #f5f5f5;
+      }
+      .btn:active {
+        transform: scale(0.97);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .result {
+        font-size: 16px;
+        color: #555;
+        min-height: 24px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Dice Roller</h1>
+      <div class="scene">
+        <div class="cube" id="cube">
+          <div class="face front" id="f-front"></div>
+          <div class="face back" id="f-back"></div>
+          <div class="face right" id="f-right"></div>
+          <div class="face left" id="f-left"></div>
+          <div class="face top" id="f-top"></div>
+          <div class="face bottom" id="f-bottom"></div>
+        </div>
+      </div>
+      <div class="result" id="result">Press roll to begin</div>
+      <button class="btn" id="btn" onclick="roll()">Roll Dice</button>
+    </div>
+
+    <script>
+      const DOTS = {
+        1: [[1, 1]],
+        2: [
+          [0, 0],
+          [2, 2],
+        ],
+        3: [
+          [0, 0],
+          [1, 1],
+          [2, 2],
+        ],
+        4: [
+          [0, 0],
+          [0, 2],
+          [2, 0],
+          [2, 2],
+        ],
+        5: [
+          [0, 0],
+          [0, 2],
+          [1, 1],
+          [2, 0],
+          [2, 2],
+        ],
+        6: [
+          [0, 0],
+          [0, 2],
+          [1, 0],
+          [1, 2],
+          [2, 0],
+          [2, 2],
+        ],
+      };
+      const OPP = { 1: 6, 6: 1, 2: 5, 5: 2, 3: 4, 4: 3 };
+      const POSE = {
+        1: { rx: -90, ry: 0 },
+        2: { rx: 0, ry: 0 },
+        3: { rx: 0, ry: -90 },
+        4: { rx: 0, ry: 90 },
+        5: { rx: 180, ry: 0 },
+        6: { rx: 90, ry: 0 },
+      };
+
+      function makeDots(n) {
+        const wrap = document.createElement("div");
+        wrap.className = "dg";
+        for (let r = 0; r < 3; r++)
+          for (let c = 0; c < 3; c++) {
+            const d = document.createElement("div");
+            const on = DOTS[n].some(([pr, pc]) => pr === r && pc === c);
+            d.className = "d" + (on ? "" : " x");
+            wrap.appendChild(d);
+          }
+        return wrap;
+      }
+
+      function setup() {
+        const layout = [
+          { id: "f-front", n: 2 },
+          { id: "f-back", n: OPP[2] },
+          { id: "f-right", n: 3 },
+          { id: "f-left", n: OPP[3] },
+          { id: "f-top", n: 5 },
+          { id: "f-bottom", n: OPP[5] },
+        ];
+        layout.forEach(({ id, n }) => {
+          const el = document.getElementById(id);
+          el.innerHTML = "";
+          el.appendChild(makeDots(n));
+        });
+      }
+      setup();
+
+      const cube = document.getElementById("cube");
+      let rx = -25,
+        ry = 30;
+      function setT(x, y) {
+        cube.style.transform = `rotateX(${x}deg) rotateY(${y}deg)`;
+      }
+      setT(rx, ry);
+
+      function easeOut(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+      function bounce(t) {
+        if (t < 1 / 2.75) return 7.5625 * t * t;
+        if (t < 2 / 2.75) {
+          t -= 1.5 / 2.75;
+          return 7.5625 * t * t + 0.75;
+        }
+        if (t < 2.5 / 2.75) {
+          t -= 2.25 / 2.75;
+          return 7.5625 * t * t + 0.9375;
+        }
+        t -= 2.625 / 2.75;
+        return 7.5625 * t * t + 0.984375;
+      }
+
+      function roll() {
+        const btn = document.getElementById("btn");
+        const res = document.getElementById("result");
+        btn.disabled = true;
+        res.textContent = "";
+
+        const final = Math.floor(Math.random() * 6) + 1;
+        const spinX = 360 * 4 + (Math.random() * 60 - 30);
+        const spinY = 360 * 5 + (Math.random() * 60 - 30);
+        const sRx = rx,
+          sRy = ry;
+        const dur = 1300,
+          t0 = performance.now();
+
+        function spinFrame(now) {
+          const t = Math.min((now - t0) / dur, 1);
+          rx = sRx + spinX * easeOut(t);
+          ry = sRy + spinY * easeOut(t);
+          setT(rx, ry);
+          if (t < 1) {
+            requestAnimationFrame(spinFrame);
+            return;
+          }
+
+          const pose = POSE[final];
+          const tRx = Math.round(rx / 360) * 360 + pose.rx;
+          const tRy = Math.round(ry / 360) * 360 + pose.ry;
+          const bRx = rx,
+            bRy = ry;
+          const bd = 350,
+            t1 = performance.now();
+
+          function snapFrame(now2) {
+            const st = Math.min((now2 - t1) / bd, 1);
+            const e = bounce(st);
+            setT(bRx + (tRx - bRx) * e, bRy + (tRy - bRy) * e);
+            if (st < 1) {
+              requestAnimationFrame(snapFrame);
+              return;
+            }
+            rx = tRx;
+            ry = tRy;
+            setT(rx, ry);
+            // res.textContent = 'You rolled a ' + final + '!';
+            btn.disabled = false;
+          }
+          requestAnimationFrame(snapFrame);
+        }
+        requestAnimationFrame(spinFrame);
+      }
+    </script>
+  </body>
+</html>
