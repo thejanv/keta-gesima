@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dice Roller</title>
+    <title>කැට ගැසීම</title>
     <style>
       *,
       *::before,
@@ -17,24 +17,36 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #f4f4f4;
         font-family: system-ui, sans-serif;
+        background-image: url("https://t1.gstatic.com/licensed-image?q=tbn:ANd9GcREAVJ406BPoWF1BIGnoP8k5LEQLKAUNF0E0942vFEeqY5Mq9Fr6HYhq5mAPzqQyIY1GooIsjda16IQwo5M");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
       }
       .wrap {
+        position: relative;
+        z-index: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 1.8rem;
         padding: 3rem 2rem;
-        background: #fff;
-        border-radius: 20px;
-        box-shadow: 0 4px 32px rgba(0, 0, 0, 0.1);
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 24px;
       }
       h1 {
-        font-size: 20px;
+        font-size: 22px;
         font-weight: 500;
-        color: #111;
-        letter-spacing: 0.01em;
+        color: #fff;
+        letter-spacing: 0.02em;
       }
       .scene {
         width: 200px;
@@ -54,7 +66,7 @@
         width: 140px;
         height: 140px;
         background: #111;
-        border: 2px solid #333;
+        border: 2px solid #444;
         border-radius: 18px;
         box-sizing: border-box;
         padding: 14px;
@@ -97,16 +109,16 @@
         font-size: 16px;
         font-weight: 500;
         border-radius: 12px;
-        border: 1.5px solid #ccc;
-        background: #fff;
-        color: #111;
+        border: 1.5px solid rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
         cursor: pointer;
         transition:
           background 0.15s,
           transform 0.1s;
       }
       .btn:hover {
-        background: #f5f5f5;
+        background: rgba(255, 255, 255, 0.25);
       }
       .btn:active {
         transform: scale(0.97);
@@ -117,15 +129,16 @@
       }
       .result {
         font-size: 16px;
-        color: #555;
+        color: rgba(255, 255, 255, 0.8);
         min-height: 24px;
         text-align: center;
       }
     </style>
   </head>
   <body>
+    <div class="overlay"></div>
     <div class="wrap">
-      <h1>Dice Roller</h1>
+      <h1>කැට ගැසීම</h1>
       <div class="scene">
         <div class="cube" id="cube">
           <div class="face front" id="f-front"></div>
@@ -282,7 +295,6 @@
             rx = tRx;
             ry = tRy;
             setT(rx, ry);
-            // res.textContent = 'You rolled a ' + final + '!';
             btn.disabled = false;
           }
           requestAnimationFrame(snapFrame);
